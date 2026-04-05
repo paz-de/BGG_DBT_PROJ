@@ -1,0 +1,11 @@
+version: 2
+
+sources:
+  - name: bgg_raw
+    database: BGG_DB
+    schema: RAW
+    tables:
+      - name: BGG_GAMES
+      - name: BGG_MECHANICS
+      - name: BGG_THEMES
+      - name: BGG_SUBCATEGORIES
