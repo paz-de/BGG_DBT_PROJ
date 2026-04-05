@@ -5,7 +5,7 @@ Run this file to extract from BGG API and load into Snowflake RAW schema.
 """
 
 from src.csv_reader import read_games, read_mechanics, read_themes, read_subcategories
-from src.snowflake_loader_new import get_connection, load_games, load_mechanics, load_themes, load_subcategories
+from src.snowflake_loader import get_connection, load_games, load_mechanics, load_themes, load_subcategories
 
 
 def run():
