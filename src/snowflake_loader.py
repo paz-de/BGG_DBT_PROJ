@@ -1,12 +1,15 @@
 """
 snowflake_loader.py
-Handles the Snowflake connection and all data loading into RAW schema tables.
-Uses truncate-and-reload strategy (full refresh each run).
+Handles the Snowflake connection and bulk loading of DataFrames into RAW schema.
+Uses write_pandas() for efficient bulk inserts — much faster than executemany for
+large datasets. Strategy is truncate-and-reload (full refresh each run).
 """
 
 import os
 import snowflake.connector
+from snowflake.connector.pandas_tools import write_pandas
 from dotenv import load_dotenv
+import pandas as pd
 
 load_dotenv()
 
@@ -15,7 +18,7 @@ def get_connection():
     """
     Create and return a Snowflake connection using credentials from .env.
     To find your account identifier in Snowflake:
-      Admin → Accounts → hover your account → copy the account identifier
+      Admin → Accounts → hover your account name → copy the account identifier
       Format is usually: orgname-accountname  (e.g. myorg-bgg123)
     """
     return snowflake.connector.connect(
@@ -28,58 +31,42 @@ def get_connection():
     )
 
 
-def load_games(conn, games: list[dict]):
-    """Truncate and reload BGG_GAMES."""
-    cursor = conn.cursor()
-    cursor.execute("TRUNCATE TABLE BGG_DB.RAW.BGG_GAMES")
-
-    sql = """
-        INSERT INTO BGG_DB.RAW.BGG_GAMES
-            (GAME_ID, NAME, YEAR_PUBLISHED, MIN_PLAYERS, MAX_PLAYERS,
-             MIN_PLAYTIME, MAX_PLAYTIME, AVG_RATING, BAYES_RATING,
-             NUM_RATINGS, COMPLEXITY_WEIGHT, BGG_RANK, _LOADED_AT)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+def _truncate_and_load(conn, df: pd.DataFrame, table_name: str):
     """
-
-    rows = [(
-        g['game_id'], g['name'], g['year_published'],
-        g['min_players'], g['max_players'],
-        g['min_playtime'], g['max_playtime'],
-        g['avg_rating'], g['bayes_rating'],
-        g['num_ratings'], g['complexity_weight'],
-        g['bgg_rank'], g['_loaded_at']
-    ) for g in games]
-
-    cursor.executemany(sql, rows)
-    print(f"  Loaded {len(rows)} rows into BGG_GAMES")
+    Truncate a RAW table and bulk load a DataFrame into it using write_pandas.
+    Column names in the DataFrame must match the Snowflake table exactly.
+    """
+    cursor = conn.cursor()
+    cursor.execute(f"TRUNCATE TABLE BGG_DB.RAW.{table_name}")
     cursor.close()
 
+    success, num_chunks, num_rows, _ = write_pandas(
+        conn=conn,
+        df=df,
+        table_name=table_name,
+        database='BGG_DB',
+        schema='RAW',
+        auto_create_table=False,
+        overwrite=False
+    )
 
-def load_categories(conn, categories: list[dict]):
-    """Truncate and reload BGG_CATEGORIES."""
-    cursor = conn.cursor()
-    cursor.execute("TRUNCATE TABLE BGG_DB.RAW.BGG_CATEGORIES")
-
-    sql = """
-        INSERT INTO BGG_DB.RAW.BGG_CATEGORIES (GAME_ID, CATEGORY, _LOADED_AT)
-        VALUES (%s, %s, %s)
-    """
-    rows = [(c['game_id'], c['category'], c['_loaded_at']) for c in categories]
-    cursor.executemany(sql, rows)
-    print(f"  Loaded {len(rows)} rows into BGG_CATEGORIES")
-    cursor.close()
+    if success:
+        print(f"  ✅ {table_name}: {num_rows:,} rows loaded ({num_chunks} chunk(s))")
+    else:
+        raise RuntimeError(f"write_pandas failed for {table_name}")
 
 
-def load_mechanics(conn, mechanics: list[dict]):
-    """Truncate and reload BGG_MECHANICS."""
-    cursor = conn.cursor()
-    cursor.execute("TRUNCATE TABLE BGG_DB.RAW.BGG_MECHANICS")
+def load_games(conn, df: pd.DataFrame):
+    _truncate_and_load(conn, df, 'BGG_GAMES')
 
-    sql = """
-        INSERT INTO BGG_DB.RAW.BGG_MECHANICS (GAME_ID, MECHANIC, _LOADED_AT)
-        VALUES (%s, %s, %s)
-    """
-    rows = [(m['game_id'], m['mechanic'], m['_loaded_at']) for m in mechanics]
-    cursor.executemany(sql, rows)
-    print(f"  Loaded {len(rows)} rows into BGG_MECHANICS")
-    cursor.close()
+
+def load_mechanics(conn, df: pd.DataFrame):
+    _truncate_and_load(conn, df, 'BGG_MECHANICS')
+
+
+def load_themes(conn, df: pd.DataFrame):
+    _truncate_and_load(conn, df, 'BGG_THEMES')
+
+
+def load_subcategories(conn, df: pd.DataFrame):
+    _truncate_and_load(conn, df, 'BGG_SUBCATEGORIES')
