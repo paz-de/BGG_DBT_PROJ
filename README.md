@@ -111,3 +111,16 @@ Tableau Public — interactive dashboard
 - dbt sources, refs, and model materialisation strategies
 - Tableau dashboard design and publishing to Tableau Public
 - Git version control and project documentation
+
+## Data Lineage (DAG)
+
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/a8674a1f-7999-4fec-aa0e-6e6f0e150f4e" />
+
+The DAG shows the full dependency graph across 4 layers:
+
+- **Sources (SRC)** — the four RAW tables loaded by Python: BGG_GAMES, BGG_MECHANICS, BGG_THEMES, BGG_SUBCATEGORIES
+- **Staging (MDL)** — one model per source, cleaning and typing only, no joins
+- **Intermediate (MDL)** — joins games to mechanics and themes, calculates counts and averages per mechanic and theme
+- **Mart (MDL)** — final denormalised tables consumed by Tableau: top games, mechanic summary, theme summary, and complexity bands
+
+dbt resolves the execution order automatically by parsing `{{ ref() }}` calls across all models.
