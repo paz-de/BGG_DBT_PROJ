@@ -114,7 +114,7 @@ Tableau Public — interactive dashboard
 
 ## Data Lineage (DAG)
 
-<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/a8674a1f-7999-4fec-aa0e-6e6f0e150f4e" />
+<img width="1397" height="710" alt="image" src="https://github.com/user-attachments/assets/140a7bc5-dd57-4a04-88a3-534add251253" />
 
 The DAG shows the full dependency graph across 4 layers:
 
