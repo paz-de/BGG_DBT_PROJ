@@ -1,0 +1,50 @@
+version: 2
+
+models:
+  - name: stg_bgg__games
+    description: "Cleaned and typed game data from BGG RAW source"
+    columns:
+      - name: game_id
+        description: "Unique BGG game identifier"
+        tests:
+          - not_null
+          - unique
+      - name: game_name
+        tests:
+          - not_null
+      - name: avg_rating
+        tests:
+          - not_null
+      - name: complexity_weight
+        tests:
+          - not_null
+
+  - name: stg_bgg__mechanics
+    description: "Unpivoted mechanics - one row per game-mechanic combination"
+    columns:
+      - name: game_id
+        tests:
+          - not_null
+      - name: mechanic_name
+        tests:
+          - not_null
+
+  - name: stg_bgg__themes
+    description: "Unpivoted themes - one row per game-theme combination"
+    columns:
+      - name: game_id
+        tests:
+          - not_null
+      - name: theme_name
+        tests:
+          - not_null
+
+  - name: stg_bgg__subcategories
+    description: "Unpivoted subcategories - one row per game-subcategory combination"
+    columns:
+      - name: game_id
+        tests:
+          - not_null
+      - name: subcategory_name
+        tests:
+          - not_null
