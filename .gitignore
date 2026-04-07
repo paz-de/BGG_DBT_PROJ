@@ -6,6 +6,7 @@ __pycache__/
 dist/
 .venv/
 venv/
+<<<<<<< HEAD
 data/
 # Default .gitignore content added by dbt Cloud# you shouldn't commit these into source control
 # these are the default directory names, adjust/add to fit your needs
@@ -14,3 +15,6 @@ dbt_packages/
 logs/
 # end dbt Cloud content
 dbt_internal_packages/
+=======
+data/
+>>>>>>> 24a052a03cc77045372573eb849038486007f876
